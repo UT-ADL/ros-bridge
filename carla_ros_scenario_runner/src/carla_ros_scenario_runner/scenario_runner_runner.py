@@ -41,7 +41,8 @@ class ScenarioRunnerRunner(ApplicationRunner):
                    "--openscenario", "{}".format(scenario_file),
                    "--timeout", "1000000",
                    "--host", self._host,
-                   "--port", str(self._port)]
+                   "--port", str(self._port),
+                   "--output"]
         if self._wait_for_ego:
             cmdline.append("--waitForEgo")
         return self.execute(cmdline, env=os.environ)
