@@ -117,6 +117,8 @@ class Sensor(Actor):
         else:
             frame_id = "map"
 
+        if getattr(self.node, "use_ros_timestamp", False):
+            timestamp = self.node.get_time()
         transform = tf2_ros.TransformStamped()
         transform.header.stamp = roscomp.ros_timestamp(sec=timestamp, from_sec=True)
         transform.header.frame_id = frame_id
