@@ -408,6 +408,7 @@ def main(args=None):
     parameters['publish_clock'] = carla_bridge.get_param('publish_clock', True)
     parameters['use_ros_timestamp'] = carla_bridge.get_param('use_ros_timestamp', False)
     parameters['town'] = carla_bridge.get_param('town', 'Town01')
+    parameters['simulate_physics'] = carla_bridge.get_param('simulate_physics', True)
     role_name = carla_bridge.get_param('ego_vehicle_role_name',
                                        ["hero", "ego_vehicle", "hero1", "hero2", "hero3"])
     parameters["ego_vehicle"] = {"role_name": role_name}
