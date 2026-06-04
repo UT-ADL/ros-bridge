@@ -397,6 +397,7 @@ def main(args=None):
     parameters['fixed_delta_seconds'] = carla_bridge.get_param('fixed_delta_seconds',
                                                                0.05)
     parameters['register_all_sensors'] = carla_bridge.get_param('register_all_sensors', True)
+    parameters['spectator_follow_ego'] = carla_bridge.get_param('spectator_follow_ego', False)
     parameters['town'] = carla_bridge.get_param('town', 'Town01')
     role_name = carla_bridge.get_param('ego_vehicle_role_name',
                                        ["hero", "ego_vehicle", "hero1", "hero2", "hero3"])
