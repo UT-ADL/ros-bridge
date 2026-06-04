@@ -15,6 +15,7 @@ import os
 from abc import abstractmethod
 
 import carla
+import cv2
 import numpy
 import transforms3d
 from cv_bridge import CvBridge
@@ -24,7 +25,7 @@ from ros_compatibility.core import get_ros_version
 
 from carla_ros_bridge.sensor import Sensor, create_cloud
 
-from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
+from sensor_msgs.msg import CameraInfo, CompressedImage, Image, PointCloud2, PointField
 
 ROS_VERSION = get_ros_version()
 
@@ -76,11 +77,14 @@ class Camera(Sensor):
                                                         '/camera_info', qos_profile=10)
         self.camera_image_publisher = node.new_publisher(Image, self.get_topic_prefix() +
                                                          '/' + 'image', qos_profile=10)
+        self.compressed_image_publisher = node.new_publisher(CompressedImage, self.get_topic_prefix() +
+                                                              '/image/compressed', qos_profile=10)
 
     def destroy(self):
         super(Camera, self).destroy()
         self.node.destroy_publisher(self.camera_info_publisher)
         self.node.destroy_publisher(self.camera_image_publisher)
+        self.node.destroy_publisher(self.compressed_image_publisher)
 
     def _build_camera_info(self):
         """
@@ -118,12 +122,24 @@ class Camera(Sensor):
         Function (override) to transform the received carla camera data
         into a ROS image message
         """
-        img_msg = self.get_ros_image(carla_camera_data)
+        image_data_array, encoding = self.get_carla_image_data_array(carla_camera_data)
+
+        img_msg = Camera.cv_bridge.cv2_to_imgmsg(image_data_array, encoding=encoding)
+        img_msg.header = self.get_msg_header(timestamp=carla_camera_data.timestamp)
 
         cam_info = self._camera_info
         cam_info.header = img_msg.header
         self.camera_info_publisher.publish(cam_info)
         self.camera_image_publisher.publish(img_msg)
+
+        if encoding in ('bgra8', 'bgr8'):
+            bgr = image_data_array[:, :, :3] if encoding == 'bgra8' else image_data_array
+            _, compressed_data = cv2.imencode('.jpg', bgr)
+            self.compressed_image_publisher.publish(CompressedImage(
+                header=img_msg.header,
+                format="jpeg",
+                data=compressed_data.tobytes()
+            ))
 
     def get_ros_transform(self, pose, timestamp):
         """
