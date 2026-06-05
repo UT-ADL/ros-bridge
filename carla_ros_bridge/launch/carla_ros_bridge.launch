@@ -20,7 +20,6 @@
   <!-- enable/disable the registration of all sensors. If disabled, only sensors
   spawned by the bridge are registered -->
   <arg name='register_all_sensors' default='True'/>
-  <arg name='spectator_follow_ego' default='False'/>
   <!--
     the role name of the vehicles that acts as ego vehicle for this ros bridge instance
     Only the vehicles within this list are controllable from within ROS.
@@ -37,7 +36,6 @@
     <param name="synchronous_mode_wait_for_vehicle_control_command" value="$(arg synchronous_mode_wait_for_vehicle_control_command)"/>
     <param name="fixed_delta_seconds" value="$(arg fixed_delta_seconds)"/>
     <param name="register_all_sensors" value="$(arg register_all_sensors)"/>
-    <param name="spectator_follow_ego" value="$(arg spectator_follow_ego)"/>
     <param name="town" value="$(arg town)"/>
     <param name="ego_vehicle_role_name" value="$(arg ego_vehicle_role_name)"/>
   </node>

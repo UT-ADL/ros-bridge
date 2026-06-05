@@ -10,12 +10,11 @@
 Classes to handle Carla spectator
 """
 
-import math
-
-import carla
+import carla_common.transforms as trans
 
 from carla_ros_bridge.actor import Actor
-from carla_ros_bridge.ego_vehicle import EgoVehicle
+
+from geometry_msgs.msg import Pose
 
 
 class Spectator(Actor):
@@ -45,24 +44,19 @@ class Spectator(Actor):
                                         node=node,
                                         carla_actor=carla_actor)
 
-    def update(self, frame, timestamp):
+        self.set_transform_subscriber = self.node.new_subscription(
+            Pose,
+            "/carla/spectator/set_transform",
+            self.on_set_transform,
+            qos_profile=10)
+
+    def destroy(self):
         """
-        Override to optionally follow the ego vehicle.
+        Function (override) to destroy this object.
         """
-        if self.node.parameters.get('spectator_follow_ego', False):
-            for actor in self.node.actor_factory.actors.values():
-                if isinstance(actor, EgoVehicle):
-                    ego_transform = actor.carla_actor.get_transform()
-                    yaw_rad = math.radians(ego_transform.rotation.yaw)
-                    spectator_transform = carla.Transform(
-                        carla.Location(
-                            x=ego_transform.location.x - 8.0 * math.cos(yaw_rad),
-                            y=ego_transform.location.y - 8.0 * math.sin(yaw_rad),
-                            z=ego_transform.location.z + 5.0),
-                        carla.Rotation(
-                            pitch=-15.0,
-                            yaw=ego_transform.rotation.yaw,
-                            roll=0.0))
-                    self.carla_actor.set_transform(spectator_transform)
-                    break
-        super(Spectator, self).update(frame, timestamp)
+        self.node.destroy_subscription(self.set_transform_subscriber)
+        super(Spectator, self).destroy()
+
+    def on_set_transform(self, pose):
+        if self.carla_actor.is_alive:
+            self.carla_actor.set_transform(trans.ros_pose_to_carla_transform(pose))
