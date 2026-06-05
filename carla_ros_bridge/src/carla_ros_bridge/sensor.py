@@ -101,6 +101,8 @@ class Sensor(Actor):
         except (KeyError, ValueError):
             self.sensor_tick_time = None
 
+        self._last_tf_stamp = None
+
         if ROS_VERSION == 1:
             self._tf_broadcaster = tf2_ros.TransformBroadcaster()
         elif ROS_VERSION == 2:
@@ -137,6 +139,9 @@ class Sensor(Actor):
 
     def publish_tf(self, pose, timestamp):
         transform = self.get_ros_transform(pose, timestamp)
+        if transform.header.stamp == self._last_tf_stamp:
+            return
+        self._last_tf_stamp = transform.header.stamp
         try:
             self._tf_broadcaster.sendTransform(transform)
         except roscomp.exceptions.ROSException:
