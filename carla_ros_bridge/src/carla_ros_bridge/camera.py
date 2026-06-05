@@ -130,9 +130,11 @@ class Camera(Sensor):
         cam_info = self._camera_info
         cam_info.header = img_msg.header
         self.camera_info_publisher.publish(cam_info)
-        self.camera_image_publisher.publish(img_msg)
 
-        if encoding in ('bgra8', 'bgr8'):
+        if self.camera_image_publisher.get_num_connections() > 0:
+            self.camera_image_publisher.publish(img_msg)
+
+        if self.compressed_image_publisher.get_num_connections() > 0 and encoding in ('bgra8', 'bgr8'):
             bgr = image_data_array[:, :, :3] if encoding == 'bgra8' else image_data_array
             _, compressed_data = cv2.imencode('.jpg', bgr)
             self.compressed_image_publisher.publish(CompressedImage(
