@@ -25,7 +25,7 @@
   <!-- stamp outgoing TF/messages with ROS time instead of Carla elapsed_seconds;
   enable when an external source (e.g. bag playback) drives /clock -->
   <arg name='use_ros_timestamp' default='False'/>
-  <!-- 
+  <!--
     the role name of the vehicles that acts as ego vehicle for this ros bridge instance
     Only the vehicles within this list are controllable from within ROS.
     (the vehicle from CARLA is selected which has the attribute 'role_name' set to this value)
