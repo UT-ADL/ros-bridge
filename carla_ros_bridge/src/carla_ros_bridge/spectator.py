@@ -10,7 +10,11 @@
 Classes to handle Carla spectator
 """
 
+import carla_common.transforms as trans
+
 from carla_ros_bridge.actor import Actor
+
+from geometry_msgs.msg import Pose
 
 
 class Spectator(Actor):
@@ -39,3 +43,20 @@ class Spectator(Actor):
                                         parent=parent,
                                         node=node,
                                         carla_actor=carla_actor)
+
+        self.set_transform_subscriber = self.node.new_subscription(
+            Pose,
+            "/carla/spectator/set_transform",
+            self.on_set_transform,
+            qos_profile=10)
+
+    def destroy(self):
+        """
+        Function (override) to destroy this object.
+        """
+        self.node.destroy_subscription(self.set_transform_subscriber)
+        super(Spectator, self).destroy()
+
+    def on_set_transform(self, pose):
+        if self.carla_actor.is_alive:
+            self.carla_actor.set_transform(trans.ros_pose_to_carla_transform(pose))
