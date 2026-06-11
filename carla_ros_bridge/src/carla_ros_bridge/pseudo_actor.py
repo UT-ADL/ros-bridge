@@ -76,7 +76,7 @@ class PseudoActor(object):
         else:
             header.frame_id = self.get_prefix()
 
-        if not timestamp:
+        if not timestamp or getattr(self.node, "use_ros_timestamp", False):
             timestamp = self.node.get_time()
         header.stamp = roscomp.ros_timestamp(sec=timestamp, from_sec=True)
         return header

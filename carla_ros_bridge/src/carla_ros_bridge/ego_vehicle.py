@@ -60,6 +60,13 @@ class EgoVehicle(Vehicle):
         self.vehicle_control_override = False
         self._vehicle_control_applied_callback = vehicle_control_applied_callback
 
+        # Cache the physics control while physics is still on, then disable it for vehicle-in-the-loop:
+        # get_physics_control() reads PhysX wheel-sim data that is torn down once physics is off, so
+        # querying a non-simulated actor segfaults the Carla server. Disabling physics lets set_transform
+        # teleports drive the ego without it being ejected.
+        self.vehicle_physics_control = self.carla_actor.get_physics_control()
+        self.carla_actor.set_simulate_physics(node.parameters['simulate_physics'])
+
         self.vehicle_status_publisher = node.new_publisher(
             CarlaEgoVehicleStatus,
             self.get_topic_prefix() + "/vehicle_status",
@@ -136,7 +143,7 @@ class EgoVehicle(Vehicle):
             vehicle_info.id = self.carla_actor.id
             vehicle_info.type = self.carla_actor.type_id
             vehicle_info.rolename = self.carla_actor.attributes.get('role_name')
-            vehicle_physics = self.carla_actor.get_physics_control()
+            vehicle_physics = self.vehicle_physics_control
 
             for wheel in vehicle_physics.wheels:
                 wheel_info = CarlaEgoVehicleInfoWheel()

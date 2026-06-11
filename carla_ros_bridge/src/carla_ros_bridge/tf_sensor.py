@@ -47,6 +47,8 @@ class TFSensor(PseudoActor):
                                        parent=parent,
                                        node=node)
 
+        self._last_tf_stamp = None
+
         if ROS_VERSION == 1:
             self._tf_broadcaster = tf2_ros.TransformBroadcaster()
         elif ROS_VERSION == 2:
@@ -75,7 +77,12 @@ class TFSensor(PseudoActor):
                 "TFSensor could not publish transform. Actor {} not found".format(self.parent.uid))
             return
 
+        header = self.get_msg_header("map", timestamp=timestamp)
+        if header.stamp == self._last_tf_stamp:
+            return
+        self._last_tf_stamp = header.stamp
+
         self._tf_broadcaster.sendTransform(TransformStamped(
-            header=self.get_msg_header("map", timestamp=timestamp),
+            header=header,
             child_frame_id=self.parent.get_prefix(),
             transform=transform))

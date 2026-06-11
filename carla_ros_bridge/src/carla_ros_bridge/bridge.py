@@ -70,6 +70,13 @@ class CarlaRosBridge(CompatibleNode):
         self.parameters = params
         self.carla_world = carla_world
 
+        # When an external source drives /clock (e.g. bag playback in vehicle-in-the-loop),
+        # the bridge must not publish /clock (it would fight the external one) and must stamp
+        # all outgoing TF and messages with ROS time instead of Carla's elapsed_seconds so they
+        # stay in the same time domain as the rest of the stack.
+        self.publish_clock = self.parameters.get("publish_clock", True)
+        self.use_ros_timestamp = self.parameters.get("use_ros_timestamp", False)
+
         self.ros_timestamp = roscomp.ros_timestamp()
         self.callback_group = roscomp.callback_groups.ReentrantCallbackGroup()
 
@@ -337,7 +344,8 @@ class CarlaRosBridge(CompatibleNode):
         """
         if roscomp.ok():
             self.ros_timestamp = roscomp.ros_timestamp(carla_timestamp.elapsed_seconds, from_sec=True)
-            self.clock_publisher.publish(Clock(clock=self.ros_timestamp))
+            if self.publish_clock:
+                self.clock_publisher.publish(Clock(clock=self.ros_timestamp))
 
     def destroy(self):
         """
@@ -397,7 +405,10 @@ def main(args=None):
     parameters['fixed_delta_seconds'] = carla_bridge.get_param('fixed_delta_seconds',
                                                                0.05)
     parameters['register_all_sensors'] = carla_bridge.get_param('register_all_sensors', True)
+    parameters['publish_clock'] = carla_bridge.get_param('publish_clock', True)
+    parameters['use_ros_timestamp'] = carla_bridge.get_param('use_ros_timestamp', False)
     parameters['town'] = carla_bridge.get_param('town', 'Town01')
+    parameters['simulate_physics'] = carla_bridge.get_param('simulate_physics', True)
     role_name = carla_bridge.get_param('ego_vehicle_role_name',
                                        ["hero", "ego_vehicle", "hero1", "hero2", "hero3"])
     parameters["ego_vehicle"] = {"role_name": role_name}

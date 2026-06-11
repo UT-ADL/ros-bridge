@@ -20,13 +20,20 @@
   <!-- enable/disable the registration of all sensors. If disabled, only sensors
   spawned by the bridge are registered -->
   <arg name='register_all_sensors' default='True'/>
+  <!-- publish /clock from Carla; disable when an external source (e.g. bag playback) drives /clock -->
+  <arg name='publish_clock' default='True'/>
+  <!-- stamp outgoing TF/messages with ROS time instead of Carla elapsed_seconds;
+  enable when an external source (e.g. bag playback) drives /clock -->
+  <arg name='use_ros_timestamp' default='False'/>
   <!-- 
     the role name of the vehicles that acts as ego vehicle for this ros bridge instance
     Only the vehicles within this list are controllable from within ROS.
     (the vehicle from CARLA is selected which has the attribute 'role_name' set to this value)
   -->
   <arg name='ego_vehicle_role_name' default='["hero", "ego_vehicle", "hero0", "hero1", "hero2", "hero3", "hero4", "hero5", "hero6", "hero7", "hero8", "hero9"]'/>
-      
+  <!-- enable/disable Carla physics simulation on the ego actor; disable in vehicle-in-the-loop mode so set_transform teleports don't eject the ego -->
+  <arg name='simulate_physics' default='True'/>
+
   <node pkg="carla_ros_bridge" name="carla_ros_bridge" type="bridge.py" output="screen" required="true">
     <param name="host" value="$(arg host)" unless="$(eval host == '')"/>
     <param name="port" value="$(arg port)" unless="$(eval port == '')"/>
@@ -36,7 +43,10 @@
     <param name="synchronous_mode_wait_for_vehicle_control_command" value="$(arg synchronous_mode_wait_for_vehicle_control_command)"/>
     <param name="fixed_delta_seconds" value="$(arg fixed_delta_seconds)"/>
     <param name="register_all_sensors" value="$(arg register_all_sensors)"/>
+    <param name="publish_clock" value="$(arg publish_clock)"/>
+    <param name="use_ros_timestamp" value="$(arg use_ros_timestamp)"/>
     <param name="town" value="$(arg town)"/>
     <param name="ego_vehicle_role_name" value="$(arg ego_vehicle_role_name)"/>
+    <param name="simulate_physics" value="$(arg simulate_physics)"/>
   </node>
 </launch>
