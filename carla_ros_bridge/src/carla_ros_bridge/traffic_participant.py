@@ -81,10 +81,11 @@ class TrafficParticipant(Actor):
         obj.accel = self.get_current_ros_accel()
         # Shape
         obj.shape.type = SolidPrimitive.BOX
+        extent = self.get_bounding_box().extent
         obj.shape.dimensions.extend([
-            self.carla_actor.bounding_box.extent.x * 2.0,
-            self.carla_actor.bounding_box.extent.y * 2.0,
-            self.carla_actor.bounding_box.extent.z * 2.0])
+            extent.x * 2.0,
+            extent.y * 2.0,
+            extent.z * 2.0])
 
         # Classification if available in attributes
         if self.get_classification() != Object.CLASSIFICATION_UNKNOWN:
@@ -137,7 +138,8 @@ class TrafficParticipant(Actor):
         marker.type = Marker.CUBE
 
         marker.pose = self.get_marker_pose()
-        marker.scale.x = self.carla_actor.bounding_box.extent.x * 2.0
-        marker.scale.y = self.carla_actor.bounding_box.extent.y * 2.0
-        marker.scale.z = self.carla_actor.bounding_box.extent.z * 2.0
+        extent = self.get_bounding_box().extent
+        marker.scale.x = extent.x * 2.0
+        marker.scale.y = extent.y * 2.0
+        marker.scale.z = extent.z * 2.0
         return marker
