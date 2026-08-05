@@ -44,6 +44,7 @@ class Actor(PseudoActor):
                                     node=node)
         self.carla_actor = carla_actor
         self.carla_actor_id = carla_actor.id
+        self._bounding_box_cache = None  # filled lazily by get_bounding_box (blocking RPC on >= 0.9.16)
 
     def destroy(self):
         """
@@ -106,6 +107,22 @@ class Actor(PseudoActor):
         """
         return trans.carla_acceleration_to_ros_accel(
             self.carla_actor.get_acceleration())
+
+    def get_bounding_box(self):
+        """
+        Return the actor's (cached) bounding box.
+
+        CARLA >= 0.9.16 made ``carla_actor.bounding_box`` a blocking ~15 ms RPC
+        (a free client-cached attribute on 0.9.15). The box is static for an actor's
+        lifetime, so it is read once and cached on this wrapper, which the actor
+        factory recreates per episode -- so the cache self-invalidates.
+
+        :return: the bounding box of this actor
+        :rtype: carla.BoundingBox
+        """
+        if self._bounding_box_cache is None:
+            self._bounding_box_cache = self.carla_actor.bounding_box  # blocking RPC on >= 0.9.16
+        return self._bounding_box_cache
 
     def get_id(self):
         """
