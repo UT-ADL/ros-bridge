@@ -30,8 +30,6 @@ from carla_ros_bridge.actor import Actor
 
 from sensor_msgs.msg import PointCloud2, PointField
 
-ROS_VERSION = roscomp.get_ros_version()
-
 _DATATYPES = {}
 _DATATYPES[PointField.INT8] = ('b', 1)
 _DATATYPES[PointField.UINT8] = ('B', 1)
@@ -101,12 +99,8 @@ class Sensor(Actor):
         except (KeyError, ValueError):
             self.sensor_tick_time = None
 
-        self._last_tf_stamp = None
-
-        if ROS_VERSION == 1:
-            self._tf_broadcaster = tf2_ros.TransformBroadcaster()
-        elif ROS_VERSION == 2:
-            self._tf_broadcaster = tf2_ros.TransformBroadcaster(node)
+        # relative pose last sent to /tf_static, replaced by ActorControl when the sensor is moved
+        self._published_pose = None
 
     def get_ros_transform(self, pose, timestamp):
         if not self.relative_spawn_pose:
@@ -138,12 +132,13 @@ class Sensor(Actor):
         return transform
 
     def publish_tf(self, pose, timestamp):
-        transform = self.get_ros_transform(pose, timestamp)
-        if transform.header.stamp == self._last_tf_stamp:
+        # the sensor is rigidly mounted, so its TF is static and only resent when the mount pose changes
+        if self.relative_spawn_pose is self._published_pose:
             return
-        self._last_tf_stamp = transform.header.stamp
+        self._published_pose = self.relative_spawn_pose
+        transform = self.get_ros_transform(pose, timestamp)
         try:
-            self._tf_broadcaster.sendTransform(transform)
+            self.node.publish_static_tf(transform)
         except roscomp.exceptions.ROSException:
             if roscomp.ok():
                 self.node.logwarn("Sensor {} failed to send transform.".format(self.uid))

@@ -24,6 +24,7 @@ from threading import Thread, Lock, Event
 import carla
 
 import ros_compatibility as roscomp
+import tf2_ros
 from ros_compatibility.node import CompatibleNode
 
 from carla_ros_bridge.actor import Actor
@@ -111,6 +112,15 @@ class CarlaRosBridge(CompatibleNode):
 
         self.carla_control_queue = queue.Queue()
 
+        # sensor mounts are fixed, so their TFs go to /tf_static. rospy latches only the last message
+        # per topic, so all of them are collected here and sent together through one broadcaster
+        if roscomp.get_ros_version() == 1:
+            self.static_tf_broadcaster = tf2_ros.StaticTransformBroadcaster()
+        else:
+            self.static_tf_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
+        self.static_transforms = {}
+        self.static_tf_lock = Lock()
+
         # actor factory
         self.actor_factory = ActorFactory(self, carla_world, self.sync_mode)
 
@@ -166,6 +176,11 @@ class CarlaRosBridge(CompatibleNode):
         self.carla_weather_subscriber = \
             self.new_subscription(CarlaWeatherParameters, "/carla/weather_control",
                                   self.on_weather_changed, qos_profile=10, callback_group=self.callback_group)
+
+    def publish_static_tf(self, transform):
+        with self.static_tf_lock:
+            self.static_transforms[transform.child_frame_id] = transform
+            self.static_tf_broadcaster.sendTransform(list(self.static_transforms.values()))
 
     def spawn_object(self, req, response=None):
         response = roscomp.get_service_response(SpawnObject)
